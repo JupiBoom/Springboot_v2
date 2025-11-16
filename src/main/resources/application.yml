@@ -43,6 +43,23 @@ spring :
     active : dev
     #引入其他配置文件，例如ftpHX 未配置文件application-ftpHX.yml
     #include: ftpHX,ftpCloud
+  # 配置中心配置
+  cloud:
+    config:
+      server:
+        git:
+          uri: file:///d:/trae-project/Springboot_v2/config-repo
+          search-paths: config
+        default-label: master
+        encrypt:
+          enabled: true
+      enabled: true
+      label: master
+  # Jasypt加密配置
+  jasypt:
+    encryptor:
+      algorithm: PBEWithMD5AndDES
+      password: fuce-config-secret-key
   servlet:
     multipart:
       #设置总上传的数据大小

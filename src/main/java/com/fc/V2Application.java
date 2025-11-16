@@ -3,8 +3,10 @@ package com.fc;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.cloud.config.server.EnableConfigServer;
 
-@SpringBootApplication(exclude = DataSourceAutoConfiguration.class,scanBasePackages = "com.fc.v2")
+@SpringBootApplication(exclude = DataSourceAutoConfiguration.class, scanBasePackages = {"com.fc", "com.fc.v2"})
+@EnableConfigServer
 public class V2Application {
 
     public static void main(String[] args) {
