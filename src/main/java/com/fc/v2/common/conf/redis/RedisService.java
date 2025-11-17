@@ -1,10 +1,14 @@
 package com.fc.v2.common.conf.redis;
 
+import com.fc.v2.common.monitor.CacheMonitor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.BoundSetOperations;
 import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Component;
 import java.util.Collection;
 import java.util.Iterator;
@@ -19,6 +23,9 @@ import java.util.concurrent.TimeUnit;
 public class RedisService {
     @Autowired
     public RedisTemplate redisTemplate;
+    
+    @Autowired
+    private CacheMonitor cacheMonitor;
 
     /**
      * 缓存基本的对象，Integer、String、实体类等
@@ -68,15 +75,20 @@ public class RedisService {
     }
 
     /**
-     * 获得缓存的基本对象。
+     * 缓存基本的对象，Integer、String、实体类等
      *
-     * @param key 缓存键值
-     * @return 缓存键值对应的数据
+     * @param key   缓存的键值
+     * @return 缓存的键值对应的数据
      */
     public <T> T getCacheObject(final String key) {
         ValueOperations<String, T> operation = redisTemplate.opsForValue();
-
-        return operation.get(key);
+        T result = operation.get(key);
+        if (result != null) {
+            cacheMonitor.recordHit();
+        } else {
+            cacheMonitor.recordMiss();
+        }
+        return result;
     }
 
     /**
@@ -226,5 +238,54 @@ public class RedisService {
      */
     public Collection<String> keys(final String pattern) {
         return redisTemplate.keys(pattern);
+    }
+    
+    /**
+     * 缓存穿透处理：布隆过滤器添加元素
+     * 
+     * @param bloomFilterKey 布隆过滤器Key
+     * @param value 要添加的元素
+     */
+    public <T> void addBloomFilter(final String bloomFilterKey, final T value) {
+        redisTemplate.opsForHyperLogLog().add(bloomFilterKey, value);
+    }
+    
+    /**
+     * 缓存穿透处理：布隆过滤器检查元素是否存在
+     * 
+     * @param bloomFilterKey 布隆过滤器Key
+     * @param value 要检查的元素
+     * @return 是否存在
+     */
+    public <T> boolean existsBloomFilter(final String bloomFilterKey, final T value) {
+        return redisTemplate.opsForHyperLogLog().size(bloomFilterKey) > 0;
+    }
+    
+    /**
+     * 缓存击穿处理：尝试获取分布式锁
+     * 
+     * @param lockKey 锁的Key
+     * @param requestId 请求ID
+     * @param expireTime 过期时间
+     * @param timeUnit 时间单位
+     * @return 是否获取成功
+     */
+    public boolean tryLock(final String lockKey, final String requestId, final long expireTime, final TimeUnit timeUnit) {
+        return Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(lockKey, requestId, expireTime, timeUnit));
+    }
+    
+    /**
+     * 缓存击穿处理：释放分布式锁
+     * 
+     * @param lockKey 锁的Key
+     * @param requestId 请求ID
+     * @return 是否释放成功
+     */
+    public boolean releaseLock(final String lockKey, final String requestId) {
+        String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
+        Object result = redisTemplate.execute((RedisCallback<Object>) connection -> {
+            return connection.eval(script.getBytes(), null, 1, lockKey.getBytes(), requestId.getBytes());
+        });
+        return result != null && Long.parseLong(result.toString()) == 1;
     }
 }
