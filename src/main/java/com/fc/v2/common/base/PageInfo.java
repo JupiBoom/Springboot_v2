@@ -1,6 +1,7 @@
 package com.fc.v2.common.base;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.github.pagehelper.Page;
@@ -72,15 +73,15 @@ public class PageInfo<T> implements Serializable {
             this.pageSize = page.getPageSize();
 
             this.total = page.getTotal();
-            this.pages = page.getPages();
-            this.list = page;
-            this.size = page.size();
-            //由于结果是>startRow的，所以实际的需要+1
+             this.pages = (int) page.getPages();
+             this.list = new ArrayList<>(page);
+             this.size = page.size();
+             //由于结果是>startRow的，所以实际的需要+1
             if (this.size == 0) {
                 this.startRow = 0;
                 this.endRow = 0;
             } else {
-                this.startRow = page.getStartRow() + 1;
+                this.startRow = (int) (page.getStartRow() + 1);
                 //计算实际的endRow（最后一页的时候特殊）
                 this.endRow = this.startRow - 1 + this.size;
             }
@@ -90,6 +91,20 @@ public class PageInfo<T> implements Serializable {
             //计算前后页，第一页，最后一页
             calcPage();
             //判断页面边界
+            judgePageBoudary();
+        } else {
+            // 处理非Page类型的List，例如直接传入的List
+            this.pageNum = 1;
+            this.pageSize = list.size();
+            this.total = list.size();
+            this.pages = this.total == 0 ? 0 : 1;
+            this.list = new ArrayList<>(list);
+            this.size = list.size();
+            this.startRow = this.size == 0 ? 0 : 1;
+            this.endRow = this.size;
+            this.navigatePages = navigatePages;
+            calcNavigatepageNums();
+            calcPage();
             judgePageBoudary();
         }
     }
@@ -166,6 +181,10 @@ public class PageInfo<T> implements Serializable {
 
     public int getPageSize() {
         return pageSize;
+    }
+
+    public void setTotal(long total) {
+        this.total = total;
     }
 
     public int getSize() {
