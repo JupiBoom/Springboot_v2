@@ -107,20 +107,13 @@ debug：当此属性设置为true时，将打印出logback内部日志信息，�
     -->
     
 
-	<!-- dev环境 -->
-	<springProfile name="dev">
-	    <root level="INFO">
-			<!-- 控制台 -->
-			<appender-ref ref="console" />
-	    </root>
-	</springProfile>
-	
-	 <!-- 生产环境 -->
-    <springProfile name="prod">
-	    <root level="INFO">
-	        <appender-ref ref="appLogAppender"/>
-	    </root>
-	</springProfile>
+	<!-- 默认环境 -->
+	<root level="INFO">
+		<!-- 控制台 -->
+		<appender-ref ref="console" />
+		<!-- 文件输出 -->
+		<appender-ref ref="appLogAppender"/>
+	</root>
 </configuration>
 
 

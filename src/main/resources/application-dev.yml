@@ -54,6 +54,17 @@ spring:
         config:
           multi-statement-allow: true
 
+# JPA配置
+spring:
+  jpa:
+    # 数据库方言
+    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+    # 显示SQL
+    show-sql: true
+    # 自动创建表结构
+    hibernate:
+      ddl-auto: update
+
 #mysql 8.0
 
 #spring:
