@@ -193,6 +193,17 @@
 			<groupId>org.quartz-scheduler</groupId>
 			<artifactId>quartz</artifactId>
 		</dependency>
+		<!-- Spring StateMachine 依赖 -->
+		<dependency>
+			<groupId>org.springframework.statemachine</groupId>
+			<artifactId>spring-statemachine-starter</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+		<!-- Spring Data JPA 依赖 -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
 		<!--
 			验证码
 			https://gitee.com/whvse/EasyCaptcha?_from=gitee_search
